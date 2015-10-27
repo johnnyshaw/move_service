@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.asto.move.persistence.SysUploadFileDomainMapper" >
+
+  <resultMap id="BaseResultMap" type="com.asto.move.domain.SysUploadFileDomain" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="unique_code" property="uniqueCode" jdbcType="VARCHAR" />
+    <result column="filename" property="filename" jdbcType="VARCHAR" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+    <result column="extension" property="extension" jdbcType="VARCHAR" />
+    <result column="path" property="path" jdbcType="VARCHAR" />
+    <result column="gmt_created" property="gmtCreated" jdbcType="TIMESTAMP" />
+    <result column="gmt_modified" property="gmtModified" jdbcType="TIMESTAMP" />
+    <result column="deleted" property="deleted" jdbcType="VARCHAR" />
+    <result column="fileid" property="fileid" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    id, unique_code, filename, url, extension, path, gmt_created, gmt_modified, deleted, fileid
+  </sql>
+  
+  <insert id="insertSelective" parameterType="com.asto.move.domain.SysUploadFileDomain" >
+    insert into sys_upload_file
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="uniqueCode != null" >
+        unique_code,
+      </if>
+      <if test="filename != null" >
+        filename,
+      </if>
+      <if test="url != null" >
+        url,
+      </if>
+      <if test="extension != null" >
+        extension,
+      </if>
+      <if test="path != null" >
+        path,
+      </if>
+      <if test="gmtCreated != null" >
+        gmt_created,
+      </if>
+      <if test="gmtModified != null" >
+        gmt_modified,
+      </if>
+      <if test="deleted != null" >
+        deleted,
+      </if>
+      <if test="fileid != null" >
+        fileid,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="uniqueCode != null" >
+        #{uniqueCode,jdbcType=VARCHAR},
+      </if>
+      <if test="filename != null" >
+        #{filename,jdbcType=VARCHAR},
+      </if>
+      <if test="url != null" >
+        #{url,jdbcType=VARCHAR},
+      </if>
+      <if test="extension != null" >
+        #{extension,jdbcType=VARCHAR},
+      </if>
+      <if test="path != null" >
+        #{path,jdbcType=VARCHAR},
+      </if>
+      <if test="gmtCreated != null" >
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null" >
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="deleted != null" >
+        #{deleted,jdbcType=VARCHAR},
+      </if>
+      <if test="fileid != null" >
+        #{fileid,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  
+  <select id="selectByUniqueCode" resultMap="BaseResultMap">
+  	select
+  		<include refid="Base_Column_List"></include>
+  	from
+  		sys_upload_file a where a.unique_code=#{uniqueCode} limit 1
+  </select>
+  
+  <select id="selectFileList" resultMap="BaseResultMap" parameterType="com.asto.move.domain.dto.SysUploadFileDomainDto">
+  	select 
+  		<include refid="Base_Column_List"></include>
+  	from 
+  		sys_upload_file t where 1=1 and (t.fileid='' or t.fileid is null)
+  		<if test="list != null and type == null"> and t.extension in 
+  			<foreach collection="list" item="tag" separator="," open="(" close=")">
+  				#{tag} 
+  			</foreach>
+  		</if>
+  		<if test="list != null and type != null"> and t.extension not in 
+  			<foreach collection="list" item="tag" separator="," open="(" close=")">
+  				#{tag} 
+  			</foreach>
+  		</if>
+  		 <if test="row != null">
+  			  limit #{begin},#{end} 
+  		</if>
+  </select>
+  
+  <select id="selectCountFileList" resultType="int"  parameterType="com.asto.move.domain.dto.SysUploadFileDomainDto">
+  	select 
+  		count(*)
+  	from 
+  		sys_upload_file t where 1=1 and (t.fileid='' or t.fileid is null)
+  		<if test="list != null and type == null"> and t.extension in 
+  			<foreach collection="list" item="tag" separator="," open="(" close=")">#{tag}</foreach>
+  		</if>
+  		<if test="list != null and type != null"> and t.extension not in 
+  			<foreach collection="list" item="tag" separator="," open="(" close=")">
+  				#{tag} 
+  			</foreach>
+  		</if>
+  </select>
+  
+  <select id="selectCountFileList1" resultType="int"  parameterType="map">
+  	select 
+  		count(*)
+  	from 
+  		sys_upload_file t where t.extension in ('bmp','gif','jpeg','jpg','png','.bmp','.gif','.jpeg','.jpg','.png') and (t.fileid='' or t.fileid is null)
+  </select>
+  
+  <update id="updateSysUploadFile" parameterType="com.asto.move.domain.SysUploadFileDomain">
+  	update sys_upload_file <set> fileid=#{fileid}</set> where unique_code=#{uniqueCode}
+  </update>
+  
+  <update id="batchUpdateSysUploadFile" parameterType="java.util.List">
+	  <foreach collection="list" item="item" index="index" separator=";" open="" close="">
+	  	update sys_upload_file <set> fileid=#{item.fileid}</set> 
+	  		where unique_code=#{item.uniqueCode} 
+	  </foreach>
+  </update>
+  
+  <!-- USER_OTHER_MATERIAL、SHOP_OTHER_MATERIAL、OPERATOR_IDENTITY_DEPUTY这三种类型的文件复制补迁至COS上，查询总数 -->
+  <select id="selectCountCopyList" resultType="int" parameterType="com.asto.move.domain.dto.SysUploadFileDomainDto">
+	SELECT 
+		count(*)
+	from 
+		usc_relate_upload_file f,sys_upload_file s
+	where 
+		f.file_code=s.unique_code
+	and 
+		(f.category='USER_OTHER_MATERIAL' or f.category='SHOP_OTHER_MATERIAL' or f.category='OPERATOR_IDENTITY_DEPUTY')
+	and 
+		length(s.fileid) &lt; 40
+  </select>
+  
+  <!-- USER_OTHER_MATERIAL、SHOP_OTHER_MATERIAL、OPERATOR_IDENTITY_DEPUTY这三种类型的文件复制补迁至COS上 -->
+  <select id="selectCopyList" resultMap="BaseResultMap" parameterType="com.asto.move.domain.dto.SysUploadFileDomainDto">
+  	select 
+  		DISTINCT s.unique_code,s.path,s.url,s.fileid
+  	from 
+		usc_relate_upload_file f,sys_upload_file s
+	where 
+		f.file_code=s.unique_code
+	and 
+		(f.category='USER_OTHER_MATERIAL' or f.category='SHOP_OTHER_MATERIAL' or f.category='OPERATOR_IDENTITY_DEPUTY')
+	and 
+		length(s.fileid) &lt; 40
+  		 <if test="row != null">
+  			  limit #{begin},#{end} 
+  		</if>
+  </select>
+</mapper>
